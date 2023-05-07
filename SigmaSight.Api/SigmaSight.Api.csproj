@@ -13,5 +13,16 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Amazon.Lambda.AspNetCoreServer" Version="8.1.0" />
+    <PackageReference Include="Flurl.Http" Version="4.0.0-pre3" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="6.30.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.5.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.5.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SigmaSight.Infrastructure\SigmaSight.Infrastructure.csproj" />
+    <ProjectReference Include="..\SigmaSight.Models\SigmaSight.Models.csproj" />
+    <ProjectReference Include="..\SigmaSight.Services\SigmaSight.Services.csproj" />
   </ItemGroup>
 </Project>
