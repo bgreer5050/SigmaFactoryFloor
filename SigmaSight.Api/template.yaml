@@ -1,0 +1,136 @@
+﻿AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: An AWS Serverless Application that uses the ASP.NET Core framework running in Amazon Lambda.
+
+Parameters:
+  EnvironmentName:
+    Description: Hosted environment
+    Type: String
+    AllowedValues:
+      - AT
+      - Dev
+      - MT
+      - Prod
+      - STG
+      - TRN
+      - UAT
+    Default: Dev
+  
+  APIName:
+    Description: Sigma Sight Factory Floor
+    Type: String
+  S3OutputBucketName:
+    Description: "mmi-out-"
+    Type: String
+
+Mappings:
+  EnvironmentMap:
+    Upper:
+      AT: Test
+      Dev: Dev
+      MT: Test
+      Prod: Prod
+      STG: Test
+      TRN: Test
+      UAT: Test
+    Lower:
+      AT: test
+      Dev: dev
+      MT: test
+      Prod: prod
+      STG: test
+      TRN: test
+      UAT: test
+
+
+Globals: 
+  Function:
+    Runtime: dotnet6
+    Timeout: 900
+    Tracing: Active
+    Environment:
+      Variables:
+        ASPNETCORE_ENVIRONMENT: !Ref EnvironmentName
+        AddMachineRuntimeQEndpoint: !Ref 
+        DATABASE_HOST_NAME:
+          Fn::ImportValue: !Sub
+            - enterprise-api-rds-address-${Environment}
+            - Environment: !FindInMap
+              - EnvironmentMap
+              - Lower
+              - !Ref EnvironmentName
+        DATABASE_SECRET_ARN:
+          Fn::ImportValue: !Sub
+            - SigmaSight-Api-Database-User-Secret-${Environment}
+            - Environment: !FindInMap
+              - EnvironmentMap
+              - Upper
+              - !Ref EnvironmentName
+
+    VpcConfig:
+      SecurityGroupIds:
+        - !Ref SgAPI # No inbound access, allows outbound
+        - Fn::ImportValue: !Sub
+          - enterprise-api-rds-address-${Environment}
+          - Environment: !FindInMap
+            - EnvironmentMap
+            - Lower
+            - !Ref EnvironmentName
+
+      SubnetIds:
+        - !ImportValue "PrivateSubnet1"
+        - !ImportValue "PrivateSubnet2"
+        - !ImportValue "PrivateSubnet3"
+
+Resources:
+  AspNetCoreFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: SigmaSight.Api::SigmaSight.Api.LambdaEntryPoint::FunctionHandlerAsync
+      Runtime: dotnet6
+      CodeUri: "./"
+      MemorySize: 256
+      Timeout: 30
+      Role: arn:aws:iam::123456789012:role/MyLambdaRole #TODO Fix
+      Policies:
+        - AWSLambda_FullAccess
+      Events:
+        ProxyResource:
+          Type: Api
+          Properties:
+            Path: "/{proxy+}"
+            Method: ANY
+        RootResource:
+          Type: Api
+          Properties:
+            Path: "/"
+            Method: ANY
+
+  AddMachineRuntimeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: SigmaSight.Api::SigmaSight.Business.AddMachineRuntimeHandler::QueueHandler
+      Runtime: dotnet6
+      CodeUri: "./"
+      MemorySize: 256
+      Timeout: 600
+      Role: arn:aws:iam::123456789012:role/MyLambdaRole #TODO Fix
+      Policies:
+        - AWSLambda_FullAccess
+            Events:
+        ProxyResource:
+          Type: Api
+          Properties:
+            Path: "/{proxy+}"
+            Method: ANY
+        RootResource:
+          Type: Api
+          Properties:
+            Path: "/"
+            Method: ANY
+        AddMachineRuntimeEvent: # New event for AddMachineRuntimeEvent
+          Type: Api
+          Properties:
+            Path: "/api/Values/AddMachineRuntimeEvent" # Path to the specific function
+            Method: POST # HTTP method used for the function
+

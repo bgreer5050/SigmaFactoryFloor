@@ -1,5 +1,6 @@
 ﻿using SigmaSight.Infrastructure.Interfaces;
 using SigmaSight.Models.ViewModels;
+using SigmaSight.Services.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace SigmaSight.Services
 {
-    public class MachineRuntimeService
+    public class MachineRuntimeService : IMachineRuntimeService
     {
         private readonly IConfigurationService ConfigurationService;
         private readonly ISQSService SQSService;
